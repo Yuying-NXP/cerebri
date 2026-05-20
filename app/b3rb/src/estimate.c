@@ -64,6 +64,9 @@ static struct context g_ctx = {
 			.has_pose = true,
 			.pose.has_position = true,
 			.pose.has_orientation = true,
+			.has_twist = true,
+			.twist.has_linear = true,
+			.twist.has_angular = true,
 		},
 	.sub_wheel_odometry = {},
 	.sub_imu = {},
@@ -195,7 +198,6 @@ static void b3rb_estimate_run(void *p0, void *p1, void *p2)
 
 		// get data
 		double rotation = ctx->wheel_odometry.rotation;
-
 		// negative sign due to current gearing, should be in driver
 		double u = (rotation - rotation_last) * ctx->wheel_radius;
 		rotation_last = rotation;
@@ -232,6 +234,8 @@ static void b3rb_estimate_run(void *p0, void *p1, void *p2)
 			ctx->odometry.pose.orientation.y = 0;
 			ctx->odometry.pose.orientation.z = sin(theta / 2);
 			ctx->odometry.pose.orientation.w = cos(theta / 2);
+			ctx->odometry.twist.angular.x = ctx->imu.angular_velocity.x;
+			ctx->odometry.twist.angular.y = ctx->imu.angular_velocity.y;
 			ctx->odometry.twist.angular.z = omega;
 			ctx->odometry.twist.linear.x = u;
 			zros_pub_update(&ctx->pub_odometry);

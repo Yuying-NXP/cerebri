@@ -314,11 +314,21 @@ def derive_rover2d_estimator():
     omega = ca.SX.sym("omega")  # angular velocity around z axis
     dt = ca.SX.sym("dt")  # time stemp
 
+    # Tells cyecca that the robot lives in 2D
     G = lie.SE2
+    # wraps x,y,theta -> X (an SE2 pose object)
     X = G.elem(ca.vertcat(x, y, theta))
+    # assumes no slippage
+    # unicyle model, a vector velocity
     v = G.algebra.elem(ca.vertcat(u, 0, omega))
 
+    # self * other.exp(self.group)
+    # X1 = X * exp(v)
     X1 = X + v
+    # X is the initial pose
+    # X.param -> x, y, theta
+    # X1 is the next pose
+    # input, output, label, label
     f_predict = ca.Function(
         "predict", [X.param, omega, u], [X1.param], ["x0", "omega", "u"], ["x1"]
     )

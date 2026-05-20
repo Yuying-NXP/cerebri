@@ -60,7 +60,9 @@ void wheel_odometry_work_handler(struct k_work *work)
 			LOG_DBG("rotation %d: %d.%06d", i, value.val1, value.val2);
 		}
 
+		// bug? j unused
 		for (int j = 0; j < N_SENSORS; j++) {
+			// convert zephyr sensor values to double
 			data_array[i] = value.val1 + value.val2 * 1e-6;
 		}
 	}
