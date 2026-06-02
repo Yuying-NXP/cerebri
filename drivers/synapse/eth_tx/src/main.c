@@ -36,12 +36,13 @@ struct context {
 	// zros node handle
 	struct zros_node node;
 	// subscriptions
-	struct zros_sub sub_actuators, sub_odometry_estimator, sub_nav_sat_fix, sub_status;
+	struct zros_sub sub_actuators, sub_odometry_estimator, sub_nav_sat_fix, sub_status, sub_imu;
 	// topic data
 	synapse_pb_Frame tx_frame;
 	synapse_pb_Actuators actuators;
 	synapse_pb_NavSatFix nav_sat_fix;
 	synapse_pb_Odometry odometry_estimator;
+	synapse_pb_Imu imu;
 	synapse_pb_Status status;
 #ifndef CONFIG_CEREBRI_SYNAPSE_RPMSG
 	// connections
@@ -60,8 +61,10 @@ static struct context g_ctx = {
 	.sub_odometry_estimator = {},
 	.sub_nav_sat_fix = {},
 	.sub_status = {},
+	.sub_imu = {},
 	.actuators = {},
 	.odometry_estimator = {},
+	.imu = {},
 	.status = {},
 	.running = Z_SEM_INITIALIZER(g_ctx.running, 1, 1),
 	.stack_size = MY_STACK_SIZE,
@@ -79,6 +82,8 @@ static void send_frame(struct context *ctx, pb_size_t which_msg)
 		frame->msg.nav_sat_fix = ctx->nav_sat_fix;
 	} else if (which_msg == synapse_pb_Frame_odometry_tag) {
 		frame->msg.odometry = ctx->odometry_estimator;
+	} else if (which_msg == synapse_pb_Frame_imu_tag){
+		frame->msg.imu = ctx->imu;
 	} else if (which_msg == synapse_pb_Frame_status_tag) {
 		frame->msg.status = ctx->status;
 	} else if (which_msg == synapse_pb_Frame_clock_offset_tag) {
@@ -122,6 +127,12 @@ static int eth_tx_init(struct context *ctx)
 		LOG_ERR("sub init estimator odometry failed: %d", ret);
 		return ret;
 	}
+	ret = zros_sub_init(&ctx->sub_imu, &ctx->node, &topic_imu,
+			    &ctx->imu, 1000);
+	if (ret < 0) {
+		LOG_ERR("sub init imu failed: %d", ret);
+		return ret;
+	}
 	ret = zros_sub_init(&ctx->sub_nav_sat_fix, &ctx->node, &topic_nav_sat_fix,
 			    &ctx->nav_sat_fix, 15);
 	if (ret < 0) {
@@ -157,7 +168,8 @@ static int eth_tx_fini(struct context *ctx)
 
 	// close subscriptions
 	zros_sub_fini(&ctx->sub_actuators);
-	zros_sub_fini(&ctx->sub_odometry_estimator);
+	zros_sub_fini(&ctx->sub_odometry_estimator);	
+	zros_sub_fini(&ctx->sub_imu);
 	zros_sub_fini(&ctx->sub_nav_sat_fix);
 	zros_sub_fini(&ctx->sub_status);
 	zros_node_fini(&ctx->node);
@@ -194,6 +206,7 @@ static void eth_tx_run(void *p0, void *p1, void *p2)
 			*zros_sub_get_event(&ctx->sub_actuators),
 			*zros_sub_get_event(&ctx->sub_status),
 			*zros_sub_get_event(&ctx->sub_odometry_estimator),
+			*zros_sub_get_event(&ctx->sub_imu),
 			*zros_sub_get_event(&ctx->sub_nav_sat_fix),
 		};
 
@@ -221,6 +234,11 @@ static void eth_tx_run(void *p0, void *p1, void *p2)
 		if (zros_sub_update_available(&ctx->sub_odometry_estimator)) {
 			zros_sub_update(&ctx->sub_odometry_estimator);
 			send_frame(ctx, synapse_pb_Frame_odometry_tag);
+		}
+
+		if (zros_sub_update_available(&ctx->sub_imu)) {
+			zros_sub_update(&ctx->sub_imu);
+			send_frame(ctx, synapse_pb_Frame_imu_tag);
 		}
 
 		if (now - ticks_last_uptime > CONFIG_SYS_CLOCK_TICKS_PER_SEC) {
