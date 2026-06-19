@@ -202,6 +202,10 @@ static void b3rb_estimate_run(void *p0, void *p1, void *p2)
 		double u = (rotation - rotation_last) * ctx->wheel_radius;
 		rotation_last = rotation;
 
+		//FIX!!!
+		// float calib_value = 0.95;
+		// u *= calib_value;
+
 		double omega = ctx->imu.angular_velocity.z;
 		// LOG_DBG("imu omega z: %10.4f", omega);
 
