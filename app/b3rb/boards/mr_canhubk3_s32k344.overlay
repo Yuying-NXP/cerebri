@@ -17,7 +17,7 @@
 			disarmed = <1500>;
 			min = <1100>;
 			max = <1900>;
-			center = <1500>;
+			center = <1520>;
 			scale = <800>;
 			scale-div = <1>;
 
@@ -381,7 +381,7 @@ uart0: &lpuart7 {
 		accel-fs = <ICM42688_DT_ACCEL_FS_16>;
 		gyro-pwr-mode = <ICM42688_DT_GYRO_LN>;
 		gyro-odr = <ICM42688_DT_GYRO_ODR_1000>;
-		gyro-fs = <ICM42688_DT_GYRO_FS_2000>;
+		gyro-fs = <ICM42688_DT_GYRO_FS_250>;
 		fifo-hires;
 		interrupt1-drdy;
 	};
