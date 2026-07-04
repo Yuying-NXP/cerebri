@@ -199,7 +199,7 @@ static void b3rb_estimate_run(void *p0, void *p1, void *p2)
 		// get data
 		double rotation = ctx->wheel_odometry.rotation;
 		// negative sign due to current gearing, should be in driver
-		double u = (rotation - rotation_last) * ctx->wheel_radius;
+		double u = (rotation - rotation_last) * ctx->wheel_radius; // Displacement in meters
 		rotation_last = rotation;
 
 		//FIX!!!

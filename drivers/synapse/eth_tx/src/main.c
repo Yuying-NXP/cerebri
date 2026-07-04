@@ -40,6 +40,7 @@ struct context {
 	struct zros_node node;
 	// subscriptions
 	struct zros_sub sub_actuators, sub_odometry_estimator, sub_nav_sat_fix, sub_status;
+	struct zros_sub sub_wheel_odometry;
 #if PUB_IMU
 	struct zros_sub sub_imu;
 #endif
@@ -49,6 +50,7 @@ struct context {
 	synapse_pb_NavSatFix nav_sat_fix;
 	synapse_pb_Odometry odometry_estimator;
 	synapse_pb_Imu imu;
+	synapse_pb_WheelOdometry wheel_odometry;
 	synapse_pb_Status status;
 #ifndef CONFIG_CEREBRI_SYNAPSE_RPMSG
 	// connections
@@ -70,6 +72,8 @@ static struct context g_ctx = {
 #if PUB_IMU
 	.sub_imu = {},
 #endif
+	.sub_wheel_odometry = {},
+	.wheel_odometry= {},
 	.actuators = {},
 	.odometry_estimator = {},
 	.imu = {},
@@ -92,6 +96,8 @@ static void send_frame(struct context *ctx, pb_size_t which_msg)
 		frame->msg.odometry = ctx->odometry_estimator;
 	} else if (which_msg == synapse_pb_Frame_imu_tag){
 		frame->msg.imu = ctx->imu;
+	} else if (which_msg == synapse_pb_Frame_wheel_odometry_tag){
+		frame->msg.wheel_odometry = ctx->wheel_odometry;
 	} else if (which_msg == synapse_pb_Frame_status_tag) {
 		frame->msg.status = ctx->status;
 	} else if (which_msg == synapse_pb_Frame_clock_offset_tag) {
@@ -145,6 +151,13 @@ static int eth_tx_init(struct context *ctx)
 	}
 #endif
 
+	ret = zros_sub_init(&ctx->sub_wheel_odometry, &ctx->node, &topic_wheel_odometry,
+			    &ctx->wheel_odometry, 1000);
+	if (ret < 0) {
+		LOG_ERR("sub init wheel odometry failed: %d", ret);
+		return ret;
+	}
+
 // #ifdef PUB_WHEEL_ODOM
 // #endif
 
@@ -187,6 +200,7 @@ static int eth_tx_fini(struct context *ctx)
 #if PUB_IMU	
 	zros_sub_fini(&ctx->sub_imu);
 #endif
+	zros_sub_fini(&ctx->sub_wheel_odometry);
 	zros_sub_fini(&ctx->sub_nav_sat_fix);
 	zros_sub_fini(&ctx->sub_status);
 	zros_node_fini(&ctx->node);
@@ -226,6 +240,7 @@ static void eth_tx_run(void *p0, void *p1, void *p2)
 #if PUB_IMU
 			*zros_sub_get_event(&ctx->sub_imu),
 #endif
+			*zros_sub_get_event(&ctx->sub_wheel_odometry),
 			*zros_sub_get_event(&ctx->sub_nav_sat_fix),
 		};
 
@@ -261,6 +276,10 @@ static void eth_tx_run(void *p0, void *p1, void *p2)
 			send_frame(ctx, synapse_pb_Frame_imu_tag);
 		}
 #endif
+		if (zros_sub_update_available(&ctx->sub_wheel_odometry)) {
+			zros_sub_update(&ctx->sub_wheel_odometry);
+			send_frame(ctx, synapse_pb_Frame_wheel_odometry_tag);
+		}
 
 		if (now - ticks_last_uptime > CONFIG_SYS_CLOCK_TICKS_PER_SEC) {
 			send_frame(ctx, synapse_pb_Frame_clock_offset_tag);
