@@ -14,6 +14,8 @@ manifest:
       url-base: https://github.com/zephyrproject-rtos
     - name: cognipilot
       url-base: https://github.com/CogniPilot
+    - name: yuying-nxp
+      url-base: https://github.com/Yuying-NXP
 
   projects:
     - name: zephyr
@@ -45,8 +47,8 @@ manifest:
       revision: f038dd178faac0481033e5e4c757e31777c1b0be # main 11/10/25
       path: modules/lib/synapse_pb
     - name: zros_drivers
-      remote: cognipilot
-      revision: 8fc6c0e8beca7efb020bf6c5ed18ed2ae3bf3763 # main 01/07/26
+      remote: yuying-nxp
+      revision: 32d7acf82500580f470328eab5378c5ecb6246a5 # yuying_filter, with LPF, calibration, and welford's algorithm
       path: modules/lib/zros_drivers
     - name: zephyr_boards
       remote: cognipilot
