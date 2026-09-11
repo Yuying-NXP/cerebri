@@ -386,7 +386,3 @@ uart0: &lpuart7 {
 		interrupt1-drdy;
 	};
 };
-
-&qdec0 {
-	micro-ticks-per-rev = <1428000000>;
-};
