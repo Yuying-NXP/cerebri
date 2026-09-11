@@ -17,7 +17,7 @@
 			disarmed = <1500>;
 			min = <1100>;
 			max = <1900>;
-			center = <1500>;
+			center = <1460>;
 			scale = <800>;
 			scale-div = <1>;
 
